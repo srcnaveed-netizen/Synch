@@ -10,12 +10,16 @@ function initSocket() {
     return null;
   }
 
-  socket = io({
+  // Connect to the same origin as the page
+  const serverUrl = window.location.origin;
+
+  socket = io(serverUrl, {
     auth: { token },
     reconnection: true,
     reconnectionAttempts: maxReconnectAttempts,
     reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000
+    reconnectionDelayMax: 5000,
+    transports: ['websocket', 'polling']
   });
 
   socket.on('connect', () => {

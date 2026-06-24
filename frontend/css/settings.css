@@ -58,13 +58,15 @@
   border-bottom: 1px solid var(--border-color);
   padding: 0 16px;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   z-index: 50;
 }
 
 .settings-mobile-header h1 {
   font-size: var(--font-lg);
   font-weight: 600;
+  flex: 1;
+  text-align: center;
 }
 
 /* Sidebar */

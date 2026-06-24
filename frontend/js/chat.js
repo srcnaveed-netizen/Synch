@@ -169,15 +169,18 @@ window.startChatWithUser = async function(userId) {
   }
 };
 
-// Mobile menu handlers
-document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
-  elements.sidebar.classList.add('open');
-  elements.sidebarOverlay.classList.add('active');
+// Mobile back button - go back to chat list
+document.getElementById('backToChatsBtn')?.addEventListener('click', () => {
+  document.querySelector('.chat-app').classList.remove('chat-open');
+  currentChat = null;
+  elements.noChatSelected.style.display = 'flex';
+  elements.chatView.style.display = 'none';
 });
 
-elements.sidebarOverlay?.addEventListener('click', () => {
-  elements.sidebar.classList.remove('open');
-  elements.sidebarOverlay.classList.remove('active');
+// New chat button in mobile empty state
+document.getElementById('newChatBtnMobile')?.addEventListener('click', () => {
+  openModal('newChatModal');
+  loadUsers();
 });
 
 async function fetchAPI(endpoint, options = {}) {
@@ -260,7 +263,9 @@ function renderChatList(filter = '') {
 }
 
 async function selectChat(chatId) {
-  const chat = chats.find(c => c._id === chatId);
+  // Convert to number for comparison since backend returns numbers
+  const numericId = parseInt(chatId);
+  const chat = chats.find(c => c._id === numericId || c._id === chatId);
   if (!chat) return;
 
   if (currentChat) {
@@ -285,9 +290,8 @@ async function selectChat(chatId) {
   elements.noChatSelected.style.display = 'none';
   elements.chatView.style.display = 'flex';
 
-  // Close mobile sidebar
-  elements.sidebar.classList.remove('open');
-  elements.sidebarOverlay.classList.remove('active');
+  // Add chat-open class for mobile layout
+  document.querySelector('.chat-app').classList.add('chat-open');
 
   renderChatList();
   await loadMessages();

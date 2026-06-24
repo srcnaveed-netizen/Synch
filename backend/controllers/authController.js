@@ -23,20 +23,20 @@ exports.sendSignupCode = async (req, res) => {
       return res.status(400).json({ error: 'Username already taken' });
     }
 
-    const code = await VerificationCode.create(email, null, 'signup');
+    const user = await User.create(username, email, password, true);
+    const token = generateToken(user.id);
 
-    pendingSignups.set(email, { username, password, expiresAt: Date.now() + 10 * 60 * 1000 });
+    await Session.create(user.id, token, req.headers['user-agent'] || 'Unknown', req.ip);
 
-    const emailSent = await sendVerificationEmail(email, code);
-
-    if (!emailSent) {
-      return res.status(500).json({ error: 'Failed to send verification email. Please check email configuration.' });
-    }
-
-    res.json({ message: 'Verification code sent to your email', email });
+    res.status(201).json({
+      message: 'Account created successfully',
+      token,
+      user: User.toPublicJSON(user),
+      skipVerification: true
+    });
   } catch (error) {
-    console.error('Send signup code error:', error);
-    res.status(500).json({ error: 'Error sending verification code' });
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Error creating account' });
   }
 };
 

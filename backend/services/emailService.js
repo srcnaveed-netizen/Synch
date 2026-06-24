@@ -1,4 +1,7 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+dns.setDefaultResultOrder('ipv4first');
 
 let transporter = null;
 
@@ -10,6 +13,9 @@ function initEmailService(config) {
     auth: {
       user: config.email,
       pass: config.password
+    },
+    tls: {
+      rejectUnauthorized: false
     }
   });
 

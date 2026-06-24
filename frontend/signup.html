@@ -152,7 +152,7 @@
       document.getElementById('passwordStrength').dataset.strength = strength;
     });
 
-    // Step 1: Send verification code
+    // Signup - direct without email verification
     document.getElementById('signupForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -170,7 +170,7 @@
       }
 
       submitBtn.disabled = true;
-      submitBtn.querySelector('span').textContent = 'Sending code...';
+      submitBtn.querySelector('span').textContent = 'Creating account...';
       submitBtn.querySelector('.loading-spinner').style.display = 'block';
       errorMessage.classList.remove('show');
 
@@ -184,15 +184,17 @@
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to send verification code');
+          throw new Error(data.error || 'Signup failed');
         }
 
-        pendingEmail = email;
-        showLoadingOverlay('Verification code sent!');
-        setTimeout(() => {
-          hideLoadingOverlay();
-          showVerificationStep();
-        }, 800);
+        if (data.skipVerification) {
+          localStorage.setItem('synch_token', data.token);
+          localStorage.setItem('synch_user', JSON.stringify(data.user));
+          showLoadingOverlay('Account created! Redirecting...');
+          setTimeout(() => {
+            window.location.href = 'chat.html';
+          }, 1000);
+        }
       } catch (error) {
         errorMessage.textContent = error.message;
         errorMessage.classList.add('show');
