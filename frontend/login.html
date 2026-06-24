@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - SYNCH</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-container">
+      <div class="auth-card" style="position: relative;">
+        <!-- Loading Overlay -->
+        <div class="auth-loading-overlay" id="loadingOverlay">
+          <div class="loading-spinner"></div>
+          <p id="loadingText">Loading...</p>
+        </div>
+
+        <div class="auth-logo">
+          <h1>SYNCH</h1>
+          <p id="authTitle">Welcome back! Sign in to continue.</p>
+        </div>
+
+        <div class="auth-error" id="errorMessage"></div>
+        <div class="auth-success" id="successMessage"></div>
+
+        <!-- Login Form -->
+        <form class="auth-form" id="loginForm">
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <div class="password-toggle">
+              <input type="password" id="password" name="password" placeholder="Enter your password" required>
+              <button type="button" id="togglePassword">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <a href="#" class="forgot-password-link" id="forgotPasswordLink">Forgot password?</a>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <span>Sign In</span>
+            <div class="loading-spinner" style="display: none; width: 18px; height: 18px;"></div>
+          </button>
+        </form>
+
+        <!-- 2FA Verification Form -->
+        <form class="auth-form" id="twoFactorForm" style="display: none;">
+          <div class="verification-header">
+            <div class="verification-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3>Two-Factor Authentication</h3>
+            <p>We sent a 6-digit code to <strong id="twoFactorEmail"></strong></p>
+          </div>
+
+          <div class="input-group">
+            <label>Verification Code</label>
+            <div class="code-input-container">
+              <input type="text" id="tfa1" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="tfa2" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="tfa3" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="tfa4" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="tfa5" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="tfa6" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="verify2FABtn">
+            <span>Verify & Sign In</span>
+            <div class="loading-spinner" style="display: none; width: 18px; height: 18px;"></div>
+          </button>
+
+          <div class="resend-code">
+            <span id="tfaResendTimer">Resend code in <strong>60s</strong></span>
+            <button type="button" id="tfaResendBtn" class="btn-link" style="display: none;">Resend code</button>
+          </div>
+
+          <button type="button" id="backToLoginFromTFA" class="btn btn-secondary" style="margin-top: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Back to Login
+          </button>
+        </form>
+
+        <!-- Forgot Password Form -->
+        <form class="auth-form" id="forgotPasswordForm" style="display: none;">
+          <div class="verification-header">
+            <div class="verification-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3>Reset your password</h3>
+            <p>Enter your email to receive a reset code</p>
+          </div>
+
+          <div class="input-group">
+            <label for="resetEmail">Email</label>
+            <input type="email" id="resetEmail" name="resetEmail" placeholder="Enter your email" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="sendResetBtn">
+            <span>Send Reset Code</span>
+            <div class="loading-spinner" style="display: none; width: 18px; height: 18px;"></div>
+          </button>
+
+          <button type="button" id="backToLoginBtn" class="btn btn-secondary" style="margin-top: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Back to Login
+          </button>
+        </form>
+
+        <!-- Reset Code Verification Form (Step 1: Code Only) -->
+        <form class="auth-form" id="resetCodeForm" style="display: none;">
+          <div class="verification-header">
+            <div class="verification-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </div>
+            <h3>Enter reset code</h3>
+            <p>We sent a 6-digit code to <strong id="resetEmailDisplay"></strong></p>
+          </div>
+
+          <div class="input-group">
+            <label>Reset Code</label>
+            <div class="code-input-container">
+              <input type="text" id="rcode1" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="rcode2" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="rcode3" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="rcode4" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="rcode5" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="rcode6" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="verifyResetCodeBtn">
+            <span>Verify Code</span>
+            <div class="loading-spinner" style="display: none; width: 18px; height: 18px;"></div>
+          </button>
+
+          <div class="resend-code">
+            <span id="resetResendTimer">Resend code in <strong>60s</strong></span>
+            <button type="button" id="resetResendBtn" class="btn-link" style="display: none;">Resend code</button>
+          </div>
+
+          <button type="button" id="backToForgotBtn" class="btn btn-secondary" style="margin-top: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Back
+          </button>
+        </form>
+
+        <!-- New Password Form (Step 2: Set New Password) -->
+        <form class="auth-form" id="newPasswordForm" style="display: none;">
+          <div class="verification-header">
+            <div class="verification-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3>Create new password</h3>
+            <p>Enter your new password below</p>
+          </div>
+
+          <div class="input-group">
+            <label for="newPassword">New Password</label>
+            <div class="password-toggle">
+              <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required minlength="6">
+              <button type="button" id="toggleNewPassword">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="confirmNewPassword">Confirm New Password</label>
+            <div class="password-toggle">
+              <input type="password" id="confirmNewPassword" name="confirmNewPassword" placeholder="Confirm new password" required minlength="6">
+              <button type="button" id="toggleConfirmNewPassword">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="setNewPasswordBtn">
+            <span>Set New Password</span>
+            <div class="loading-spinner" style="display: none; width: 18px; height: 18px;"></div>
+          </button>
+        </form>
+
+        <p class="auth-switch">
+          Don't have an account? <a href="signup.html">Sign up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/ui.js"></script>
+  <script>
+    let resetEmail = '';
+    let resetCountdown = 60;
+    let countdownInterval = null;
+
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const input = document.getElementById('password');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('toggleNewPassword').addEventListener('click', function() {
+      const input = document.getElementById('newPassword');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+
+    let tfaEmail = '';
+    let tfaCountdown = 60;
+    let tfaCountdownInterval = null;
+
+    function showLoadingOverlay(text) {
+      document.getElementById('loadingText').textContent = text || 'Loading...';
+      document.getElementById('loadingOverlay').classList.add('active');
+    }
+
+    function hideLoadingOverlay() {
+      document.getElementById('loadingOverlay').classList.remove('active');
+    }
+
+    // Login form
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMessage = document.getElementById('errorMessage');
+
+      submitBtn.disabled = true;
+      submitBtn.querySelector('span').textContent = 'Signing in...';
+      submitBtn.querySelector('.loading-spinner').style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        if (data.requires2FA) {
+          tfaEmail = data.email;
+          showLoadingOverlay('Verification code sent!');
+          setTimeout(() => {
+            hideLoadingOverlay();
+            show2FAForm();
+          }, 800);
+          return;
+        }
+
+        showLoadingOverlay('Welcome back! Redirecting...');
+        localStorage.setItem('synch_token', data.token);
+        localStorage.setItem('synch_user', JSON.stringify(data.user));
+        setTimeout(() => {
+          window.location.href = 'chat.html';
+        }, 800);
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = 'Sign In';
+        submitBtn.querySelector('.loading-spinner').style.display = 'none';
+      }
+    });
+
+    // Show 2FA form
+    function show2FAForm() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('twoFactorForm').style.display = 'block';
+      document.getElementById('twoFactorEmail').textContent = tfaEmail;
+      document.getElementById('authTitle').textContent = 'Verify your identity';
+      document.getElementById('tfa1').focus();
+      startTFACountdown();
+    }
+
+    // Back to login from 2FA
+    document.getElementById('backToLoginFromTFA').addEventListener('click', function() {
+      document.getElementById('twoFactorForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('authTitle').textContent = 'Welcome back! Sign in to continue.';
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').querySelector('span').textContent = 'Sign In';
+      document.getElementById('submitBtn').querySelector('.loading-spinner').style.display = 'none';
+      clearInterval(tfaCountdownInterval);
+      clearTFAInputs();
+    });
+
+    // 2FA code inputs
+    const tfaInputs = document.querySelectorAll('#twoFactorForm .code-input');
+    tfaInputs.forEach((input, index) => {
+      input.addEventListener('input', function(e) {
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = value;
+        if (value && index < tfaInputs.length - 1) {
+          tfaInputs[index + 1].focus();
+        }
+        if (getTFACode().length === 6) {
+          document.getElementById('twoFactorForm').dispatchEvent(new Event('submit'));
+        }
+      });
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          tfaInputs[index - 1].focus();
+        }
+      });
+      input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+        pasteData.split('').forEach((char, i) => {
+          if (tfaInputs[i]) tfaInputs[i].value = char;
+        });
+        if (pasteData.length === 6) {
+          document.getElementById('twoFactorForm').dispatchEvent(new Event('submit'));
+        }
+      });
+    });
+
+    function getTFACode() {
+      return Array.from(tfaInputs).map(input => input.value).join('');
+    }
+
+    function clearTFAInputs() {
+      tfaInputs.forEach(input => input.value = '');
+    }
+
+    // 2FA verify
+    document.getElementById('twoFactorForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const code = getTFACode();
+      if (code.length !== 6) return;
+
+      const verifyBtn = document.getElementById('verify2FABtn');
+      const errorMessage = document.getElementById('errorMessage');
+
+      verifyBtn.disabled = true;
+      verifyBtn.querySelector('span').textContent = 'Verifying...';
+      verifyBtn.querySelector('.loading-spinner').style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/login/verify-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: tfaEmail, code })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Verification failed');
+
+        showLoadingOverlay('Verified! Redirecting...');
+        localStorage.setItem('synch_token', data.token);
+        localStorage.setItem('synch_user', JSON.stringify(data.user));
+        setTimeout(() => {
+          window.location.href = 'chat.html';
+        }, 800);
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        verifyBtn.disabled = false;
+        verifyBtn.querySelector('span').textContent = 'Verify & Sign In';
+        verifyBtn.querySelector('.loading-spinner').style.display = 'none';
+        clearTFAInputs();
+        tfaInputs[0].focus();
+      }
+    });
+
+    // 2FA countdown
+    function startTFACountdown() {
+      tfaCountdown = 60;
+      document.getElementById('tfaResendTimer').style.display = 'inline';
+      document.getElementById('tfaResendBtn').style.display = 'none';
+      tfaCountdownInterval = setInterval(() => {
+        tfaCountdown--;
+        document.getElementById('tfaResendTimer').innerHTML = `Resend code in <strong>${tfaCountdown}s</strong>`;
+        if (tfaCountdown <= 0) {
+          clearInterval(tfaCountdownInterval);
+          document.getElementById('tfaResendTimer').style.display = 'none';
+          document.getElementById('tfaResendBtn').style.display = 'inline';
+        }
+      }, 1000);
+    }
+
+    // Resend 2FA code
+    document.getElementById('tfaResendBtn').addEventListener('click', async function() {
+      this.disabled = true;
+      this.textContent = 'Sending...';
+      try {
+        const response = await fetch('/api/auth/resend-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: tfaEmail, type: 'login' })
+        });
+        if (!response.ok) throw new Error('Failed to resend');
+        this.textContent = 'Resend code';
+        this.disabled = false;
+        startTFACountdown();
+      } catch (error) {
+        document.getElementById('errorMessage').textContent = 'Failed to resend code';
+        document.getElementById('errorMessage').classList.add('show');
+        this.textContent = 'Resend code';
+        this.disabled = false;
+      }
+    });
+
+    // Forgot password link
+    document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('forgotPasswordForm').style.display = 'block';
+      document.getElementById('authTitle').textContent = 'Reset your password';
+      document.getElementById('errorMessage').classList.remove('show');
+    });
+
+    // Back to login
+    document.getElementById('backToLoginBtn').addEventListener('click', function() {
+      document.getElementById('forgotPasswordForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('authTitle').textContent = 'Welcome back! Sign in to continue.';
+    });
+
+    // Send reset code
+    document.getElementById('forgotPasswordForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('resetEmail').value;
+      const sendBtn = document.getElementById('sendResetBtn');
+      const errorMessage = document.getElementById('errorMessage');
+
+      sendBtn.disabled = true;
+      sendBtn.querySelector('span').textContent = 'Sending...';
+      sendBtn.querySelector('.loading-spinner').style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send reset code');
+        }
+
+        resetEmail = email;
+        showLoadingOverlay('Reset code sent!');
+        setTimeout(() => {
+          hideLoadingOverlay();
+          showResetCodeForm();
+        }, 800);
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        sendBtn.disabled = false;
+        sendBtn.querySelector('span').textContent = 'Send Reset Code';
+        sendBtn.querySelector('.loading-spinner').style.display = 'none';
+      }
+    });
+
+    function showResetCodeForm() {
+      document.getElementById('forgotPasswordForm').style.display = 'none';
+      document.getElementById('resetCodeForm').style.display = 'block';
+      document.getElementById('resetEmailDisplay').textContent = resetEmail;
+      document.getElementById('rcode1').focus();
+      startResetCountdown();
+    }
+
+    // Back to forgot form
+    document.getElementById('backToForgotBtn').addEventListener('click', function() {
+      document.getElementById('resetCodeForm').style.display = 'none';
+      document.getElementById('forgotPasswordForm').style.display = 'block';
+      document.getElementById('sendResetBtn').disabled = false;
+      document.getElementById('sendResetBtn').querySelector('span').textContent = 'Send Reset Code';
+      document.getElementById('sendResetBtn').querySelector('.loading-spinner').style.display = 'none';
+      clearInterval(countdownInterval);
+      clearResetCodeInputs();
+    });
+
+    // Reset code inputs
+    const resetCodeInputs = document.querySelectorAll('#resetCodeForm .code-input');
+    resetCodeInputs.forEach((input, index) => {
+      input.addEventListener('input', function(e) {
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = value;
+
+        if (value && index < resetCodeInputs.length - 1) {
+          resetCodeInputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          resetCodeInputs[index - 1].focus();
+        }
+      });
+
+      input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+        pasteData.split('').forEach((char, i) => {
+          if (resetCodeInputs[i]) resetCodeInputs[i].value = char;
+        });
+      });
+    });
+
+    function getResetCode() {
+      return Array.from(resetCodeInputs).map(input => input.value).join('');
+    }
+
+    function clearResetCodeInputs() {
+      resetCodeInputs.forEach(input => input.value = '');
+    }
+
+    // Step 1: Verify reset code
+    document.getElementById('resetCodeForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const code = getResetCode();
+      if (code.length !== 6) {
+        document.getElementById('errorMessage').textContent = 'Please enter the 6-digit code';
+        document.getElementById('errorMessage').classList.add('show');
+        return;
+      }
+
+      const verifyBtn = document.getElementById('verifyResetCodeBtn');
+      const errorMessage = document.getElementById('errorMessage');
+
+      verifyBtn.disabled = true;
+      verifyBtn.querySelector('span').textContent = 'Verifying...';
+      verifyBtn.querySelector('.loading-spinner').style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/verify-reset-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: resetEmail, code })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Invalid code');
+
+        showLoadingOverlay('Code verified!');
+        clearInterval(countdownInterval);
+        setTimeout(() => {
+          hideLoadingOverlay();
+          document.getElementById('resetCodeForm').style.display = 'none';
+          document.getElementById('newPasswordForm').style.display = 'block';
+          document.getElementById('authTitle').textContent = 'Create new password';
+        }, 800);
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        verifyBtn.disabled = false;
+        verifyBtn.querySelector('span').textContent = 'Verify Code';
+        verifyBtn.querySelector('.loading-spinner').style.display = 'none';
+        clearResetCodeInputs();
+        resetCodeInputs[0].focus();
+      }
+    });
+
+    // Toggle password visibility for new password form
+    document.getElementById('toggleNewPassword').addEventListener('click', function() {
+      const input = document.getElementById('newPassword');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('toggleConfirmNewPassword').addEventListener('click', function() {
+      const input = document.getElementById('confirmNewPassword');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+
+    // Step 2: Set new password
+    document.getElementById('newPasswordForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmNewPassword').value;
+      const errorMessage = document.getElementById('errorMessage');
+      const successMessage = document.getElementById('successMessage');
+
+      if (newPassword.length < 6) {
+        errorMessage.textContent = 'Password must be at least 6 characters';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        errorMessage.textContent = 'Passwords do not match';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      const setBtn = document.getElementById('setNewPasswordBtn');
+      setBtn.disabled = true;
+      setBtn.querySelector('span').textContent = 'Saving...';
+      setBtn.querySelector('.loading-spinner').style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: resetEmail, newPassword })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to reset password');
+        }
+
+        showLoadingOverlay('Password updated!');
+        setTimeout(() => {
+          hideLoadingOverlay();
+          document.getElementById('newPasswordForm').style.display = 'none';
+          document.getElementById('loginForm').style.display = 'block';
+          document.getElementById('authTitle').textContent = 'Welcome back! Sign in to continue.';
+          successMessage.textContent = 'Password reset successfully! Please sign in.';
+          successMessage.classList.add('show');
+        }, 800);
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        setBtn.disabled = false;
+        setBtn.querySelector('span').textContent = 'Set New Password';
+        setBtn.querySelector('.loading-spinner').style.display = 'none';
+      }
+    });
+
+    // Reset countdown
+    function startResetCountdown() {
+      resetCountdown = 60;
+      document.getElementById('resetResendTimer').style.display = 'inline';
+      document.getElementById('resetResendBtn').style.display = 'none';
+
+      countdownInterval = setInterval(() => {
+        resetCountdown--;
+        document.getElementById('resetResendTimer').innerHTML = `Resend code in <strong>${resetCountdown}s</strong>`;
+
+        if (resetCountdown <= 0) {
+          clearInterval(countdownInterval);
+          document.getElementById('resetResendTimer').style.display = 'none';
+          document.getElementById('resetResendBtn').style.display = 'inline';
+        }
+      }, 1000);
+    }
+
+    // Resend reset code
+    document.getElementById('resetResendBtn').addEventListener('click', async function() {
+      const errorMessage = document.getElementById('errorMessage');
+      this.disabled = true;
+      this.textContent = 'Sending...';
+
+      try {
+        const response = await fetch('/api/auth/resend-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: resetEmail, type: 'reset' })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to resend code');
+        }
+
+        this.textContent = 'Resend code';
+        this.disabled = false;
+        startResetCountdown();
+        errorMessage.classList.remove('show');
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        this.textContent = 'Resend code';
+        this.disabled = false;
+      }
+    });
+
+    const token = localStorage.getItem('synch_token');
+    if (token) {
+      window.location.href = 'chat.html';
+    }
+  </script>
+</body>
+</html>

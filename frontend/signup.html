@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - SYNCH</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-container">
+      <div class="auth-card" style="position: relative;">
+        <!-- Loading Overlay -->
+        <div class="auth-loading-overlay" id="loadingOverlay">
+          <div class="loading-spinner"></div>
+          <p id="loadingText">Sending verification code...</p>
+        </div>
+
+        <div class="auth-logo">
+          <h1>SYNCH</h1>
+          <p>Create your account to get started</p>
+        </div>
+
+        <div class="auth-error" id="errorMessage"></div>
+
+        <!-- Step 1: Account Details -->
+        <form class="auth-form" id="signupForm">
+          <div class="input-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Choose a username" required minlength="3" maxlength="30">
+          </div>
+
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <div class="password-toggle">
+              <input type="password" id="password" name="password" placeholder="Create a password" required minlength="6">
+              <button type="button" id="togglePassword">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="password-strength" id="passwordStrength" data-strength="0">
+              <div class="password-strength-bar"></div>
+              <div class="password-strength-bar"></div>
+              <div class="password-strength-bar"></div>
+              <div class="password-strength-bar"></div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="password-toggle">
+              <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+              <button type="button" id="toggleConfirmPassword">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <span>Continue</span>
+            <div class="loading-spinner" style="display: none; width: 18px; height: 18px;"></div>
+          </button>
+        </form>
+
+        <!-- Step 2: Email Verification -->
+        <form class="auth-form" id="verifyForm" style="display: none;">
+          <div class="verification-header">
+            <div class="verification-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </div>
+            <h3>Verify your email</h3>
+            <p>We sent a 6-digit code to <strong id="verifyEmail"></strong></p>
+          </div>
+
+          <div class="input-group">
+            <label for="verificationCode">Verification Code</label>
+            <div class="code-input-container">
+              <input type="text" id="code1" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code">
+              <input type="text" id="code2" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="code3" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="code4" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="code5" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+              <input type="text" id="code6" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="verifyBtn">
+            <span>Verify & Create Account</span>
+            <div class="loading-spinner" style="display: none; width: 18px; height: 18px;"></div>
+          </button>
+
+          <div class="resend-code">
+            <span id="resendTimer">Resend code in <strong>60s</strong></span>
+            <button type="button" id="resendBtn" class="btn-link" style="display: none;">Resend code</button>
+          </div>
+
+          <button type="button" id="backBtn" class="btn btn-secondary" style="margin-top: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Back
+          </button>
+        </form>
+
+        <p class="auth-switch">
+          Already have an account? <a href="login.html">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/ui.js"></script>
+  <script>
+    let pendingEmail = '';
+    let resendCountdown = 60;
+    let countdownInterval = null;
+
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const input = document.getElementById('password');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+      const input = document.getElementById('confirmPassword');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('password').addEventListener('input', function() {
+      const password = this.value;
+      let strength = 0;
+
+      if (password.length >= 6) strength++;
+      if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+      if (password.match(/\d/)) strength++;
+      if (password.match(/[^a-zA-Z\d]/)) strength++;
+
+      document.getElementById('passwordStrength').dataset.strength = strength;
+    });
+
+    // Step 1: Send verification code
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMessage = document.getElementById('errorMessage');
+
+      if (password !== confirmPassword) {
+        errorMessage.textContent = 'Passwords do not match';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.querySelector('span').textContent = 'Sending code...';
+      submitBtn.querySelector('.loading-spinner').style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/signup/send-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send verification code');
+        }
+
+        pendingEmail = email;
+        showLoadingOverlay('Verification code sent!');
+        setTimeout(() => {
+          hideLoadingOverlay();
+          showVerificationStep();
+        }, 800);
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = 'Continue';
+        submitBtn.querySelector('.loading-spinner').style.display = 'none';
+      }
+    });
+
+    function showLoadingOverlay(text) {
+      document.getElementById('loadingText').textContent = text || 'Loading...';
+      document.getElementById('loadingOverlay').classList.add('active');
+    }
+
+    function hideLoadingOverlay() {
+      document.getElementById('loadingOverlay').classList.remove('active');
+    }
+
+    // Show verification step
+    function showVerificationStep() {
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('verifyForm').style.display = 'block';
+      document.getElementById('verifyEmail').textContent = pendingEmail;
+      document.getElementById('code1').focus();
+      startResendCountdown();
+    }
+
+    // Back button
+    document.getElementById('backBtn').addEventListener('click', function() {
+      document.getElementById('verifyForm').style.display = 'none';
+      document.getElementById('signupForm').style.display = 'block';
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').querySelector('span').textContent = 'Continue';
+      document.getElementById('submitBtn').querySelector('.loading-spinner').style.display = 'none';
+      clearInterval(countdownInterval);
+      clearCodeInputs();
+    });
+
+    // Code input handling
+    const codeInputs = document.querySelectorAll('.code-input');
+    codeInputs.forEach((input, index) => {
+      input.addEventListener('input', function(e) {
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = value;
+
+        if (value && index < codeInputs.length - 1) {
+          codeInputs[index + 1].focus();
+        }
+
+        if (getFullCode().length === 6) {
+          document.getElementById('verifyForm').dispatchEvent(new Event('submit'));
+        }
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          codeInputs[index - 1].focus();
+        }
+      });
+
+      input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+        pasteData.split('').forEach((char, i) => {
+          if (codeInputs[i]) codeInputs[i].value = char;
+        });
+        if (pasteData.length === 6) {
+          document.getElementById('verifyForm').dispatchEvent(new Event('submit'));
+        }
+      });
+    });
+
+    function getFullCode() {
+      return Array.from(codeInputs).map(input => input.value).join('');
+    }
+
+    function clearCodeInputs() {
+      codeInputs.forEach(input => input.value = '');
+    }
+
+    // Step 2: Verify code
+    document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const code = getFullCode();
+      if (code.length !== 6) return;
+
+      const verifyBtn = document.getElementById('verifyBtn');
+      const errorMessage = document.getElementById('errorMessage');
+
+      verifyBtn.disabled = true;
+      verifyBtn.querySelector('span').textContent = 'Verifying...';
+      verifyBtn.querySelector('.loading-spinner').style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/signup/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail, code })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Verification failed');
+        }
+
+        localStorage.setItem('synch_token', data.token);
+        localStorage.setItem('synch_user', JSON.stringify(data.user));
+        showLoadingOverlay('Account created! Redirecting...');
+        setTimeout(() => {
+          window.location.href = 'chat.html';
+        }, 1000);
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        verifyBtn.disabled = false;
+        verifyBtn.querySelector('span').textContent = 'Verify & Create Account';
+        verifyBtn.querySelector('.loading-spinner').style.display = 'none';
+        clearCodeInputs();
+        codeInputs[0].focus();
+      }
+    });
+
+    // Resend countdown
+    function startResendCountdown() {
+      resendCountdown = 60;
+      document.getElementById('resendTimer').style.display = 'inline';
+      document.getElementById('resendBtn').style.display = 'none';
+
+      countdownInterval = setInterval(() => {
+        resendCountdown--;
+        document.getElementById('resendTimer').innerHTML = `Resend code in <strong>${resendCountdown}s</strong>`;
+
+        if (resendCountdown <= 0) {
+          clearInterval(countdownInterval);
+          document.getElementById('resendTimer').style.display = 'none';
+          document.getElementById('resendBtn').style.display = 'inline';
+        }
+      }, 1000);
+    }
+
+    // Resend code
+    document.getElementById('resendBtn').addEventListener('click', async function() {
+      const errorMessage = document.getElementById('errorMessage');
+      this.disabled = true;
+      this.textContent = 'Sending...';
+
+      try {
+        const response = await fetch('/api/auth/resend-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail, type: 'signup' })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to resend code');
+        }
+
+        this.textContent = 'Resend code';
+        this.disabled = false;
+        startResendCountdown();
+        errorMessage.classList.remove('show');
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        errorMessage.classList.add('show');
+        this.textContent = 'Resend code';
+        this.disabled = false;
+      }
+    });
+
+    const token = localStorage.getItem('synch_token');
+    if (token) {
+      window.location.href = 'chat.html';
+    }
+  </script>
+</body>
+</html>
